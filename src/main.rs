@@ -6,7 +6,6 @@ mod projectron;
 
 fn get_project(project_name: &str) -> config::Project {
     let home_config = config::get_home_config();
-    println!("{:?}", home_config);
     for project_ref in home_config.project {
         if project_ref.name == project_name {
             return config::load_project(&project_ref);

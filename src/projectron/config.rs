@@ -74,7 +74,6 @@ pub fn load_project(project: &ProjectDefinition) -> Project {
         let home_directory = env::var("HOME").unwrap();
         project_path.replace_range(0..1, home_directory.as_str());
     }
-    println!("Project path: {}", project_path);
     let config_path = format!("{}/.pjconfig", project_path);
     let config_contents = read_config(config_path);
 
