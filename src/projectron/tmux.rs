@@ -105,7 +105,7 @@ pub fn attach(project: &Project) {
         .spawn()
         .expect("failed to spawn tmux");
 
-    let exitStatus = tmux.wait().expect("Failed to wait for tmux");
+    let exit_status = tmux.wait().expect("Failed to wait for tmux");
 
-    assert!(exitStatus.success());
+    assert!(exit_status.success());
 }
