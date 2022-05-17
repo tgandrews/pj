@@ -89,6 +89,9 @@ pub fn is_project_running(name: &String) -> bool {
     if stderr.starts_with("no server running on") {
         return false;
     }
+    if stderr.starts_with("error connecting to /private/tmp/tmux") {
+        return false;
+    }
     panic!(
         "Unknown tmux failure!\nStatus: {}\nStdErr: {}",
         output
@@ -108,4 +111,8 @@ pub fn attach(project: &Project) {
     let exit_status = tmux.wait().expect("Failed to wait for tmux");
 
     assert!(exit_status.success());
+}
+
+pub fn kill(project: &Project) {
+    run_tmux(vec!["kill-session", "-t", project.name.as_str()]);
 }
