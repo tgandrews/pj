@@ -11,10 +11,12 @@ pub fn start(project: &Project) {
         "-t",
         project.name.as_str(),
     ]);
+
     for (i, window) in project.windows.iter().enumerate() {
         let window_identity = format!("{}:{}", project.name, i + 1);
+
         start_window(&window_identity, &window);
-        split_window(&window_identity, &window, &project.path);
+        split_window(&window_identity, &window, &project);
     }
 }
 
@@ -33,27 +35,45 @@ fn start_window(identity: &String, window: &Window) {
     ])
 }
 
-fn split_window(identity: &String, window: &Window, project_path: &String) {
+fn split_window(identity: &String, window: &Window, project: &Project) {
     run_tmux(vec!["split-window", "-h", "-t", identity.as_str()]);
-    let window_path = format!("{}/{}", project_path, window.folder);
+    let window_path = format!("{}/{}", project.path, window.folder);
     let command = match &window.command {
         Some(cmd) => cmd.clone(),
         None => format!("echo \"{}\"", window.folder),
     };
+
+    let move_to_window_path = format!("cd {}", window_path);
+    let mut basic_actions = vec![move_to_window_path, "clear".to_string()];
+    match &window.start {
+        Some(start) => basic_actions.push(format!("source {}/{}", project.path, start.to_string())),
+        None => {}
+    }
+
+    let main_window_additional_commands = vec![command];
+
+    run_command_in(
+        format!("{}.0", identity),
+        basic_actions
+            .clone()
+            .into_iter()
+            .chain(main_window_additional_commands.into_iter())
+            .collect(),
+    );
+
+    run_command_in(format!("{}.1", identity), basic_actions)
+}
+
+fn run_command_in(identity: String, commands: Vec<String>) {
+    let statement = commands.join(" && ");
+
     run_tmux(vec![
         "send-keys",
         "-t",
-        format!("{}.0", identity).as_str(),
-        format!("cd {} && {}", window_path, command).as_str(),
+        identity.as_str(),
+        statement.as_str(),
         "Enter",
     ]);
-    run_tmux(vec![
-        "send-keys",
-        "-t",
-        format!("{}.1", identity).as_str(),
-        format!("cd {}", window_path).as_str(),
-        "Enter",
-    ])
 }
 
 fn run_tmux(args: Vec<&str>) {

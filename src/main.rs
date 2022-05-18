@@ -26,6 +26,8 @@ fn end(project_name: &str) {
     let project = get_project(project_name);
     if tmux::is_project_running(&project.name) {
         tmux::kill(&project)
+    } else {
+        println!("{} is not running", project.name)
     }
 }
 

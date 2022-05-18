@@ -53,12 +53,19 @@ pub struct Window {
     pub folder: String,
     pub name: Option<String>,
     pub command: Option<String>,
+    pub start: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Default {
+    pub start: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
 struct SerialisedProjectConfig {
     #[serde(rename = "window")]
     pub windows: Vec<Window>,
+    pub default: Option<Default>,
 }
 
 #[derive(Debug)]
@@ -79,8 +86,22 @@ pub fn load_project(project: &ProjectDefinition) -> Project {
 
     let config_on_disk: SerialisedProjectConfig = toml::from_str(config_contents.as_str()).unwrap();
 
+    let windows = match config_on_disk.default {
+        Some(default) => config_on_disk
+            .windows
+            .into_iter()
+            .map(|mut w| {
+                if w.start.is_none() {
+                    w.start = default.start.clone()
+                }
+                w
+            })
+            .collect(),
+        None => config_on_disk.windows,
+    };
+
     let config = Project {
-        windows: config_on_disk.windows,
+        windows,
         path: project_path,
         name: project.name.clone(),
     };
