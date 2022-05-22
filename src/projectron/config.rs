@@ -50,8 +50,8 @@ pub fn get_home_config() -> HomeConfig {
 
 #[derive(Deserialize, Debug)]
 pub struct Window {
-    pub folder: String,
-    pub name: Option<String>,
+    pub name: String,
+    pub folder: Option<String>,
     pub command: Option<String>,
     pub start: Option<String>,
 }

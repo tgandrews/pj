@@ -21,33 +21,34 @@ pub fn start(project: &Project) {
 }
 
 fn start_window(identity: &String, window: &Window) {
-    let window_name = match &window.name {
-        Some(name) => name,
-        None => &window.folder,
-    };
-
     run_tmux(vec![
         "new-window",
         "-t",
         identity.as_str(),
         "-n",
-        window_name.as_str(),
+        &window.name.as_str(),
     ])
 }
 
 fn split_window(identity: &String, window: &Window, project: &Project) {
     run_tmux(vec!["split-window", "-h", "-t", identity.as_str()]);
-    let window_path = format!("{}/{}", project.path, window.folder);
+    let window_path = match &window.folder {
+        Some(folder) => format!("{}/{}", project.path, folder),
+        None => project.path.clone(),
+    };
     let command = match &window.command {
         Some(cmd) => cmd.clone(),
-        None => format!("echo \"{}\"", window.folder),
+        None => format!("echo \"{}\"", window.name),
     };
 
     let move_to_window_path = format!("cd {}", window_path);
     let mut basic_actions = vec![move_to_window_path, "clear".to_string()];
-    match &window.start {
-        Some(start) => basic_actions.push(format!("source {}/{}", project.path, start.to_string())),
-        None => {}
+    if window.start.is_some() {
+        basic_actions.push(format!(
+            "source {}/{}",
+            project.path,
+            window.start.clone().unwrap().to_string()
+        ))
     }
 
     let main_window_additional_commands = vec![command];

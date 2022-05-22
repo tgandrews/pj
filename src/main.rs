@@ -43,6 +43,12 @@ fn main() {
                 .arg(arg!([PROJECT])),
         )
         .subcommand(
+            Command::new("stop")
+                .about("Stop an existing session")
+                .arg_required_else_help(true)
+                .arg(arg!([PROJECT])),
+        )
+        .subcommand(
             Command::new("start")
                 .about("Start or join an session")
                 .arg_required_else_help(true)
@@ -51,8 +57,9 @@ fn main() {
         .get_matches();
 
     match matches.subcommand() {
-        Some(("end", sub_matches)) => end(sub_matches.value_of("PROJECT").unwrap()),
         Some(("start", sub_matches)) => start(sub_matches.value_of("PROJECT").unwrap()),
+        Some(("end", sub_matches)) => end(sub_matches.value_of("PROJECT").unwrap()),
+        Some(("stop", sub_matches)) => end(sub_matches.value_of("PROJECT").unwrap()),
         _ => unreachable!("Exhausted list of subcommands and subcommand_required prevents `None`"),
     }
 }
