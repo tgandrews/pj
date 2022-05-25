@@ -72,7 +72,8 @@ fn run_command_in(identity: String, commands: Vec<String>) {
         "send-keys",
         "-t",
         identity.as_str(),
-        statement.as_str(),
+        // Prefix commands with a space to ensure they aren't added to the history
+        format!(" {}", statement).as_str(),
         "Enter",
     ]);
 }
