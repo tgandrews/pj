@@ -13,11 +13,24 @@ pub fn start(project: &Project) {
     ]);
 
     for (i, window) in project.windows.iter().enumerate() {
-        let window_identity = format!("{}:{}", project.name, i + 1);
+        let window_identity = format!("{}:{}", project.name, i);
 
-        start_window(&window_identity, &window);
+        if i == 0 {
+            rename_window(&window_identity, &window)
+        } else {
+            start_window(&window_identity, &window);
+        }
         split_window(&window_identity, &window, &project);
     }
+}
+
+fn rename_window(identity: &String, window: &Window) {
+    run_tmux(vec![
+        "rename-window",
+        "-t",
+        identity.as_str(),
+        window.name.as_str(),
+    ])
 }
 
 fn start_window(identity: &String, window: &Window) {
