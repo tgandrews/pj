@@ -1,4 +1,8 @@
-use std::process::{Command, ExitStatus};
+use std::{
+    process::{Command, ExitStatus},
+    thread::sleep,
+    time::Duration,
+};
 
 use super::config::{Project, Window};
 
@@ -171,16 +175,11 @@ fn run_tmux_with_output(args: Vec<&str>) -> TmuxResult {
 struct RunningPane<'a> {
     project: &'a str,
     pane_id: &'a str,
-    // running_command: &'a str,
 }
 
 fn kill_running_panes_for_project(project: &Project) {
-    let all_running_panes_output = run_tmux_with_output(vec![
-        "list-panes",
-        "-a",
-        "-F",
-        "#{pane_id},#{pane_current_command},#{session_name}",
-    ]);
+    let all_running_panes_output =
+        run_tmux_with_output(vec!["list-panes", "-a", "-F", "#{pane_id},#{session_name}"]);
     if !all_running_panes_output.status.success() {
         panic!(
             "Unable to list tmux panes:\n{}",
@@ -195,15 +194,16 @@ fn kill_running_panes_for_project(project: &Project) {
             let values: Vec<&str> = line.split(",").collect();
             return RunningPane {
                 pane_id: values[0],
-                // running_command: values[1],
-                project: values[2],
+                project: values[1],
             };
         })
         .filter(|pane| pane.project == project.name)
         .collect();
 
     for pane in running_panes_for_project {
-        run_tmux(vec!["send-keys", "-t", pane.pane_id, "C-c"])
+        run_tmux(vec!["send-keys", "-t", pane.pane_id, "C-c"]);
+        // Wait long enough for it to be killed
+        sleep(Duration::from_millis(500));
     }
 }
 
