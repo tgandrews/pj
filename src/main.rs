@@ -1,9 +1,9 @@
 use clap::{arg, command, Command};
-use projectron::config::ProjectDefinition;
+use pj::config::ProjectDefinition;
 
-use crate::projectron::{config, tmux};
+use crate::pj::{config, tmux};
 
-mod projectron;
+mod pj;
 
 fn get_project_defintions() -> Vec<ProjectDefinition> {
     let home_config = config::get_home_config();

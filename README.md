@@ -1,4 +1,4 @@
-# Projectron (pj)
+# pj
 
 Command line tool for starting the necessary terminals for a project and shutting
 them down. It is a wrapper for [tmux](https://github.com/tmux/tmux/wiki)
