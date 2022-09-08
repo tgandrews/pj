@@ -1,5 +1,5 @@
 use clap::{arg, command, Command};
-use pj::config::ProjectDefinition;
+use pj::config::{add_current_path_to_home_config, ProjectDefinition};
 
 use crate::pj::{config, tmux};
 
@@ -18,6 +18,14 @@ fn get_project(project_name: &str) -> config::Project {
         }
     }
     panic!("No project called: {}", project_name)
+}
+
+fn register(project_name: &str) {
+    add_current_path_to_home_config(project_name);
+    println!(
+        "Successfully registered. You can now run: pj start {}",
+        project_name
+    )
 }
 
 fn start(project_name: &str) {
@@ -67,7 +75,7 @@ fn main() {
         )
         .subcommand(
             Command::new("start")
-                .about("Start or join an session")
+                .about("Start or re-connect to a session")
                 .arg_required_else_help(true)
                 .arg(arg!([PROJECT])),
         )
@@ -76,12 +84,20 @@ fn main() {
                 .alias("ls")
                 .about("Get the running projects"),
         )
+        .subcommand(
+            Command::new("register")
+                .alias("add")
+                .about("Register a project so it can be managed")
+                .arg_required_else_help(true)
+                .arg(arg!([PROJECT])),
+        )
         .get_matches();
 
     match matches.subcommand() {
         Some(("start", sub_matches)) => start(sub_matches.value_of("PROJECT").unwrap()),
         Some(("end", sub_matches)) => end(sub_matches.value_of("PROJECT").unwrap()),
         Some(("list", _)) => list(),
+        Some(("register", sub_matches)) => register(sub_matches.value_of("PROJECT").unwrap()),
         _ => unreachable!("Exhausted list of subcommands and subcommand_required prevents `None`"),
     }
 }

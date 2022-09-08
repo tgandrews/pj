@@ -1,5 +1,11 @@
-use serde::Deserialize;
-use std::{env, fs::File, io::Read, path::Path, process::exit};
+use serde::{Deserialize, Serialize};
+use std::{
+    env::{self, current_dir},
+    fs::File,
+    io::Read,
+    path::Path,
+    process::exit,
+};
 
 fn read_config(file_path_string: String) -> String {
     let file_path = Path::new(file_path_string.as_str());
@@ -28,24 +34,67 @@ fn read_config(file_path_string: String) -> String {
     return config_contents;
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ProjectDefinition {
     pub name: String,
     pub path: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct HomeConfig {
     pub project: Vec<ProjectDefinition>,
 }
 
-pub fn get_home_config() -> HomeConfig {
+fn get_home_config_path() -> String {
     let home_directory = env::var("HOME").unwrap();
-    let home_file_path = format!("{}/.pjconfig", home_directory);
+    format!("{}/.pjconfig", home_directory)
+}
+
+pub fn get_home_config() -> HomeConfig {
+    let home_file_path = get_home_config_path();
     let home_config_contents = read_config(home_file_path);
     let config = toml::from_str(home_config_contents.as_str()).unwrap();
 
     return config;
+}
+
+pub fn add_current_path_to_home_config(project_name: &str) {
+    let current_config = get_home_config();
+
+    let current_path = current_dir().unwrap();
+    let current_path_str = current_path.into_os_string().into_string().unwrap();
+
+    let mut filtered_projects = current_config
+        .project
+        .iter()
+        .filter(|project| return project.name != project_name)
+        .cloned()
+        .collect::<Vec<ProjectDefinition>>();
+
+    filtered_projects.push(ProjectDefinition {
+        name: project_name.to_string(),
+        path: current_path_str,
+    });
+
+    let mut new_config = current_config.clone();
+    new_config.project = filtered_projects;
+
+    let new_config = match toml::to_string_pretty(&new_config) {
+        Err(why) => {
+            eprintln!("Failed to serialize to toml. Error: {}", why);
+            exit(1)
+        }
+        Ok(config) => config,
+    };
+
+    let home_file_path = get_home_config_path();
+    match std::fs::write(home_file_path, new_config) {
+        Err(why) => {
+            eprintln!("Failed to serialize to toml. Error: {}", why);
+            exit(1)
+        }
+        Ok(_) => {}
+    }
 }
 
 #[derive(Deserialize, Debug)]
