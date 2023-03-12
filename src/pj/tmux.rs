@@ -20,30 +20,25 @@ pub fn start(project: &Project) {
         let window_identity = format!("{}:{}", project.name, i);
 
         if i == 0 {
-            rename_window(&window_identity, &window)
+            rename_window(&window_identity, window)
         } else {
-            start_window(&window_identity, &window);
+            start_window(&window_identity, window);
         }
-        split_window(&window_identity, &window, &project);
+        split_window(&window_identity, window, project);
     }
 }
 
-fn rename_window(identity: &String, window: &Window) {
-    run_tmux(vec![
-        "rename-window",
-        "-t",
-        identity.as_str(),
-        window.name.as_str(),
-    ])
+fn rename_window(identity: &str, window: &Window) {
+    run_tmux(vec!["rename-window", "-t", identity, window.name.as_str()])
 }
 
-fn start_window(identity: &String, window: &Window) {
+fn start_window(identity: &str, window: &Window) {
     run_tmux(vec![
         "new-window",
         "-t",
-        identity.as_str(),
+        identity,
         "-n",
-        &window.name.as_str(),
+        window.name.as_str(),
     ])
 }
 
@@ -64,7 +59,7 @@ fn split_window(identity: &String, window: &Window, project: &Project) {
         basic_actions.push(format!(
             "source {}/{}",
             project.path,
-            window.start.clone().unwrap().to_string()
+            window.start.clone().unwrap()
         ))
     }
 
@@ -99,7 +94,7 @@ fn run_tmux(args: Vec<&str>) {
     let status = Command::new("tmux")
         .args(&args)
         .status()
-        .expect(format!("Failed to execute: tmux").as_str());
+        .expect("Failed to execute: tmux");
     if !status.success() {
         panic!(
             "Failed to execute: tmux {:?} (Status: {})",
@@ -163,13 +158,11 @@ fn run_tmux_with_output(args: Vec<&str>) -> TmuxResult {
     let stdout = String::from_utf8(output.stdout).unwrap();
     let stderr = String::from_utf8(output.stderr).unwrap();
 
-    let result = TmuxResult {
+    TmuxResult {
         status: output.status,
         stderr,
         stdout,
-    };
-
-    return result;
+    }
 }
 
 struct RunningPane<'a> {
@@ -188,14 +181,14 @@ fn kill_running_panes_for_project(project: &Project) {
     }
     let running_panes_for_project: Vec<RunningPane> = all_running_panes_output
         .stdout
-        .split("\n")
+        .split('\n')
         .filter(|line| !line.is_empty())
         .map(|line| {
-            let values: Vec<&str> = line.split(",").collect();
-            return RunningPane {
+            let values: Vec<&str> = line.split(',').collect();
+            RunningPane {
                 pane_id: values[0],
                 project: values[1],
-            };
+            }
         })
         .filter(|pane| pane.project == project.name)
         .collect();
