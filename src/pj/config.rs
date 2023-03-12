@@ -23,15 +23,12 @@ fn read_config(file_path_string: String) -> String {
     };
 
     let mut config_contents = String::new();
-    match config_file.read_to_string(&mut config_contents) {
-        Err(why) => {
-            eprintln!("Failed to read: \"{}\"\n Error: {}", file_path_string, why);
-            exit(1)
-        }
-        Ok(_) => {}
-    };
+    if let Err(why) = config_file.read_to_string(&mut config_contents) {
+        eprintln!("Failed to read: \"{}\"\n Error: {}", file_path_string, why);
+        exit(1);
+    }
 
-    return config_contents;
+    config_contents
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -55,7 +52,7 @@ pub fn get_home_config() -> HomeConfig {
     let home_config_contents = read_config(home_file_path);
     let config = toml::from_str(home_config_contents.as_str()).unwrap();
 
-    return config;
+    config
 }
 
 pub fn add_current_path_to_home_config(project_name: &str) {
@@ -67,7 +64,7 @@ pub fn add_current_path_to_home_config(project_name: &str) {
     let mut filtered_projects = current_config
         .project
         .iter()
-        .filter(|project| return project.name != project_name)
+        .filter(|project| project.name != project_name)
         .cloned()
         .collect::<Vec<ProjectDefinition>>();
 
@@ -76,7 +73,7 @@ pub fn add_current_path_to_home_config(project_name: &str) {
         path: current_path_str,
     });
 
-    let mut new_config = current_config.clone();
+    let mut new_config = current_config;
     new_config.project = filtered_projects;
 
     let new_config = match toml::to_string_pretty(&new_config) {
@@ -88,12 +85,9 @@ pub fn add_current_path_to_home_config(project_name: &str) {
     };
 
     let home_file_path = get_home_config_path();
-    match std::fs::write(home_file_path, new_config) {
-        Err(why) => {
-            eprintln!("Failed to serialize to toml. Error: {}", why);
-            exit(1)
-        }
-        Ok(_) => {}
+    if let Err(why) = std::fs::write(home_file_path, new_config) {
+        eprintln!("Failed to serialize to toml. Error: {}", why);
+        exit(1)
     }
 }
 
@@ -149,11 +143,9 @@ pub fn load_project(project: &ProjectDefinition) -> Project {
         None => config_on_disk.windows,
     };
 
-    let config = Project {
+    Project {
         windows,
         path: project_path,
         name: project.name.clone(),
-    };
-
-    return config;
+    }
 }
